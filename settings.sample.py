@@ -16,6 +16,9 @@ CONFLUENCE_BASE_URL = 'http://192.168.240.188:8090'
 # A list of space keys to export (leave it empty to export all available spaces)
 SPACES_TO_EXPORT = []
 
+# From this page export
+from_page_id = None
+
 # Confluence authentication
 # Example for HTTP Basic Authentication: ('johndoe', 'sup3rs3cur3pw')
 HTTP_AUTHENTICATION = ('johndoe', 'sup3rs3cur3pw')

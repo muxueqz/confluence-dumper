@@ -21,7 +21,7 @@ import codecs
 import os
 import shutil
 from lxml import html
-from lxml.etree import XMLSyntaxError
+from lxml.etree import XMLSyntaxError, ParserError
 
 import utils
 import settings
@@ -119,6 +119,9 @@ def handle_html_references(html_content, page_duplicate_file_names, page_file_ma
     """
     try:
         html_tree = html.fromstring(html_content)
+    except ParserError:
+        print('page is empty')
+        return html_content
     except XMLSyntaxError:
         print('%sWARNING: Could not parse HTML content of last page. Original content will be downloaded as it is.'
               % ('\t'*(depth+1)))
@@ -301,7 +304,7 @@ def fetch_page_recursively(page_id, folder_path, download_folder, html_template,
         print('%sPAGE: %s (%s)' % ('\t'*(depth+1), page_title, page_id))
 
         # Construct unique file name
-        file_name = provide_unique_file_name(page_duplicate_file_names, page_file_matching, page_title,
+        file_name = provide_unique_file_name(page_duplicate_file_names, page_file_matching, str(page_id),
                                              explicit_file_extension='html')
 
         # Remember this file and all children
@@ -341,10 +344,10 @@ def fetch_page_recursively(page_id, folder_path, download_folder, html_template,
         id_file_path = '%s/%s.html' % (folder_path, page_id)
         id_file_page_title = 'Forward to page %s' % page_title
         original_file_link = utils.encode_url(utils.sanitize_for_filename(file_name))
-        id_file_page_content = settings.HTML_FORWARD_MESSAGE % (original_file_link, page_title)
-        id_file_forward_header = '<meta http-equiv="refresh" content="0; url=%s" />' % original_file_link
-        utils.write_html_2_file(id_file_path, id_file_page_title, id_file_page_content, html_template,
-                                additional_headers=[id_file_forward_header])
+        #  id_file_page_content = settings.HTML_FORWARD_MESSAGE % (original_file_link, page_title)
+        #  id_file_forward_header = '<meta http-equiv="refresh" content="0; url=%s" />' % original_file_link
+        #  utils.write_html_2_file(id_file_path, id_file_page_title, id_file_page_content, html_template,
+                                #  additional_headers=[id_file_forward_header])
 
         # Iterate through all child pages
         page_url = '%s/rest/api/content/%s/child/page?limit=25' % (settings.CONFLUENCE_BASE_URL, page_id)
@@ -475,7 +478,7 @@ def main():
 
             print('SPACE (%d/%d): %s (%s)' % (space_counter, len(spaces_to_export), space_name, space))
 
-            space_page_id = response['homepage']['id']
+            space_page_id = settings.from_page_id or response['homepage']['id']
             path_collection = fetch_page_recursively(space_page_id, space_folder, download_folder, html_template)
 
             if path_collection:
